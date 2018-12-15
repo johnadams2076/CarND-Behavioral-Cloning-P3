@@ -7,22 +7,23 @@ from sklearn.utils import shuffle
 
 # Most of the code is from snippets provided by Udacity material.
 samples = []
-# Load CSV file and ignore the header.
-with open('./data/driving_log.csv') as csvfile:
+path = "C:\\Users\\simk3\\Downloads\\"
+# Load CSV file.
+with open(path + 'data\\driving_log_test.csv') as csvfile:
     reader = csv.reader(csvfile)
-    next(reader, None)
+    #next(reader, None)
     for line in reader:
         samples.append(line)
-
+    print('# of Samples', len(samples))
 # Split Dataset. Validation gets 20%. Training set gets 80%.
 from sklearn.model_selection import train_test_split
 
 train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 # create adjusted steering measurements for the side camera images
-correction = 0.2  # this is a parameter to tune
+correction = 0.25  # this is a parameter to tune
 # Path of stored images
-path = './data/IMG/'
+img_path = path + 'data\\IMG\\'
 
 
 def generator(samples, train_mode, batch_size=32):
@@ -38,9 +39,10 @@ def generator(samples, train_mode, batch_size=32):
             angles = []
             for batch_sample in batch_samples:
                 # Get name of image stored under IMG directory
-                name_center = path + batch_sample[0].split('/')[-1]
+                name_center = img_path + batch_sample[0].split('\\')[-1]
                 # Read Image
                 center_image = cv2.imread(name_center)
+                center_image = cv2.cvtColor(center_image, cv2.COLOR_BGR2YUV)
                 # print(batch_sample[3])
 
                 try:
@@ -52,11 +54,13 @@ def generator(samples, train_mode, batch_size=32):
                 # Execute conditional block for training set
                 if train_mode == True:
                     # if training set then add left and right camera images.
-                    name_left = path + batch_sample[1].split('/')[-1]
-                    name_right = path + batch_sample[2].split('/')[-1]
+                    name_left = img_path + batch_sample[1].split('\\')[-1]
+                    name_right = img_path + batch_sample[2].split('\\')[-1]
 
                     left_image = cv2.imread(name_left)
+                    left_image = cv2.cvtColor(left_image, cv2.COLOR_BGR2YUV)
                     right_image = cv2.imread(name_right)
+                    right_image = cv2.cvtColor(right_image, cv2.COLOR_BGR2YUV)
 
                     left_angle = center_angle + correction
                     right_angle = center_angle - correction
@@ -123,9 +127,9 @@ model = Sequential()
 # model.add(... finish defining the rest of your model architecture here ...)
 # model.add(BatchNormalization(epsilon=0.001,mode=2, axis=1,input_shape=(3, nrows,ncols)))
 # trim image to only see section with road
-model.add(Cropping2D(cropping=((60, 20), (0, 0)), input_shape=(160, 320, 3)))
+model.add(Cropping2D(cropping=((70, 25), (0, 0)), input_shape=(160, 320, 3)))
 # Resize image to fit the architecture
-model.add(Lambda(resize_and_normalize, input_shape=(80, 320, 3), output_shape=(66, 200, 3)))
+model.add(Lambda(resize_and_normalize, input_shape=(90, 320, 3), output_shape=(66, 200, 3)))
 # Convolutional Layers
 model.add(Conv2D(24, (5, 5), padding='valid', activation='relu', strides=(2, 2)))
 
